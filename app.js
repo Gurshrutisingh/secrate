@@ -10,7 +10,6 @@ const mongoose = require('mongoose');
 // const md5 = require('md5');
 //level 4(hashing + salting)
 const bcrypt = require('bcryptjs');
-const salt = bcrypt.genSaltSync(10);
 const app = express();
 main().catch(err => console.log(err));
 
@@ -42,19 +41,15 @@ app.route("/login")
 })
 .post(function (req,res) {
   
-  const hash = bcrypt.hashSync(req.body.password, salt);
+  // const hash = bcrypt.hashSync(req.body.password, salt);
   const userEmail=req.body.username;
-  const userPassword=hash;
   sec.findOne({email: userEmail})
     .then((docs)=>{
-      if(docs.password===userPassword)
-      {
+      bcrypt.compare(req.body.password, docs.password, function(err, result) {
+        if( result === true){
         res.render('secrets');
-      }
-      else
-      {
-        res.render('login');
-      }
+        }
+      });
     })
     .catch(()=>{
       res.render('register');
@@ -68,14 +63,20 @@ app.route("/register")
 .post(function (req,res) {
   console.log(req.body.username);
   console.log(req.body.password);
-  var hash = bcrypt.hashSync(req.body.password, salt);
-
-  const customer=new sec({
-    email: req.body.username,
-    password: hash
+  var pass;
+  bcrypt.genSalt(10, function(err, salt) {
+    bcrypt.hash(req.body.password, salt, function(err, hash) {
+        // Store hash in your password DB.
+        const customer=new sec({
+          email: req.body.username,
+          password: hash
+        });
+        customer.save();
+        res.render('secrets');
+    });
   });
-  customer.save();
-  res.render('secrets');
+  //var hash = bcrypt.hashSync(req.body.password, salt);
+  
 });
 
 
