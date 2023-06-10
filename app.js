@@ -1,9 +1,10 @@
 //jshint esversion:6
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-
+var encrypt = require('mongoose-encryption');
 const app = express();
 main().catch(err => console.log(err));
 
@@ -20,8 +21,10 @@ const secretSchema = new mongoose.Schema({
   email: String,
   password: String
 });
-const secret= mongoose.model('secret', secretSchema );
 
+
+secretSchema.plugin(encrypt, { secret: process.env.SECRET ,encryptedFields: ['password']});
+const sec= mongoose.model('secret', secretSchema );
 //TODO
 app.get("/",function (req,res) {
   res.render('home');
@@ -56,7 +59,7 @@ app.route("/register")
 .post(function (req,res) {
   console.log(req.body.username);
   console.log(req.body.password);
-  const customer=new secret({
+  const customer=new sec({
     email: req.body.username,
     password: req.body.password
   });
