@@ -4,7 +4,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-var encrypt = require('mongoose-encryption');
+//level 2(encrypting)
+//var encrypt = require('mongoose-encryption');
+//level 3(hashing)
+const md5 = require('md5');
+
 const app = express();
 main().catch(err => console.log(err));
 
@@ -22,9 +26,10 @@ const secretSchema = new mongoose.Schema({
   password: String
 });
 
-
-secretSchema.plugin(encrypt, { secret: process.env.SECRET ,encryptedFields: ['password']});
+//level 2(encrypting)
+// secretSchema.plugin(encrypt, { secret: process.env.SECRET ,encryptedFields: ['password']});
 const sec= mongoose.model('secret', secretSchema );
+
 //TODO
 app.get("/",function (req,res) {
   res.render('home');
@@ -35,8 +40,8 @@ app.route("/login")
 })
 .post(function (req,res) {
   const userEmail=req.body.username;
-  const userPassword=req.body.password;
-  secret.findOne({email: userEmail})
+  const userPassword=md5(req.body.password);
+  sec.findOne({email: userEmail})
     .then((docs)=>{
       if(docs.password===userPassword)
       {
@@ -61,7 +66,7 @@ app.route("/register")
   console.log(req.body.password);
   const customer=new sec({
     email: req.body.username,
-    password: req.body.password
+    password: md5(req.body.password)
   });
   customer.save();
   res.render('secrets');
