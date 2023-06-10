@@ -6,9 +6,11 @@ const ejs = require("ejs");
 const mongoose = require('mongoose');
 //level 2(encrypting)
 //var encrypt = require('mongoose-encryption');
-//level 3(hashing)
-const md5 = require('md5');
-
+//level 3(hashing MD5)
+// const md5 = require('md5');
+//level 4(hashing + salting)
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(10);
 const app = express();
 main().catch(err => console.log(err));
 
@@ -39,8 +41,10 @@ app.route("/login")
   res.render('login');
 })
 .post(function (req,res) {
+  
+  const hash = bcrypt.hashSync(req.body.password, salt);
   const userEmail=req.body.username;
-  const userPassword=md5(req.body.password);
+  const userPassword=hash;
   sec.findOne({email: userEmail})
     .then((docs)=>{
       if(docs.password===userPassword)
@@ -64,9 +68,11 @@ app.route("/register")
 .post(function (req,res) {
   console.log(req.body.username);
   console.log(req.body.password);
+  var hash = bcrypt.hashSync(req.body.password, salt);
+
   const customer=new sec({
     email: req.body.username,
-    password: md5(req.body.password)
+    password: hash
   });
   customer.save();
   res.render('secrets');
